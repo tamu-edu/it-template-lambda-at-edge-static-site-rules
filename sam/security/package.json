@@ -1,0 +1,12 @@
+{
+  "name": "cascade-www-edge-security-headers",
+  "version": "1.0.0",
+  "description": "HTTP security headers addition for CloudFront requests",
+  "repository": "",
+  "author": "Blake Dworaczyk<blaked@tamu.edu>",
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

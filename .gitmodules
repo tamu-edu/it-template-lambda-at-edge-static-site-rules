@@ -1,0 +1,3 @@
+[submodule "sam"]
+	path = sam
+	url = git@github.com:aggie-innovation-platform-private/aip-aws-cloudfront-with-lambda-edge-base.git

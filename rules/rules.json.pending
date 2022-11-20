@@ -1,0 +1,25 @@
+[
+    "^/autodiscover http://autodiscover.tamu.edu [R=302,L,NC]",
+    
+    "/t3/(.*)$ https://pef.tamu.edu/t3/$1 [R=301,L,NC]",
+    "/t3/announcements/index.html https://pef.tamu.edu/t3/Announcements/index.html [R=301,L,NC]",
+    "/xgrants/(.*)$ https://pef.tamu.edu/xgrants/$1 [R=301,L,NC]",
+    "/xgrants/announcements/index.html https://pef.tamu.edu/xgrants/Announcements/index.html [R=301,L,NC]",
+    "/xgrants/submit-ideas.html https://pef.tamu.edu/xgrants/how-it-works/submit-ideas.html [R=301,L,NC]",
+    "/xgrants/one-pagers.html https://pef.tamu.edu/xgrants/how-it-works/one-pagers.html [R=301,L,NC]",
+    "/xgrants/submit-preliminary-proposals.html https://pef.tamu.edu/xgrants/how-it-works/submit-preliminary-proposals.html [R=301,L,NC]",
+    "/xgrants/submit-final-proposals.html https://pef.tamu.edu/xgrants/how-it-works/submit-final-proposals.html [R=301,L,NC]",
+    "/pttg/(.*)$ https://pef.tamu.edu/pttg/$1 [R=301,L,NC]",
+    "/pttg/announcements/index.html https://pef.tamu.edu/pttg/Announcements/index.html [R=301,L,NC]",
+    "/administration/committees-task-forces/index.html https://president.tamu.edu/committees-task-forces/index.html [R=301,L,NC]",
+    "/president-young/index.html https://president.tamu.edu/about/index.html [R=301,L,NC]",
+    "/administration/presidents-cabinet/index.html https://president.tamu.edu [R=302,L,NC]",
+    "/documents/Pres_ORG_Chart_Mar2021.pdf https://president.tamu.edu [R=302,L,NC]",
+    "/assets/documents/Pres_ORG_Chart_2021-updated.pdf https://president.tamu.edu [R=302,L,NC]",
+    "/path-forward/working-groups/index.html https://pathforward.tamu.edu/working-groups/index.html [R=301,L,NC]",
+    "/path-forward/sic/index.html https://pathforward.tamu.edu/sic/index.html [R=301,L,NC]",
+    
+    "^(.*)/$ $1/index.html [R,L]",
+    "^(((?!\\.).)*)?(/\\?.*)$ $1/index.html [R,L]",
+    "^(((?!\\.).)*)$ $1/index.html [R,L]"
+]

@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Cloudfront + Lambda@Edge template with dynamic rewrite rules
+
+Parameters:
+  Alias:
+    Type: String
+    Description: CNAME of site (needs to match cert)
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket to create and use as the origin
+  CertARN:
+    Type: String
+    Description: Certificate ARN for site (needs to match alias)
+  DefaultTTL:
+    Type: Number
+    Description: Default number of seconds to cache content
+    Default: 600
+  Description:
+    Type: String
+    Description: Description of site
+  LoggingBucketName:
+    Type: String
+    Description: Name of the S3 bucket to create and use for logging CloudFront requests
+  LogExpiration:
+    Type: Number
+    Description: The number of days to retain logs
+    Default: 365
+  MediaTTL:
+    Type: Number
+    Description: The number of seconds to cache media content
+    Default: 86400
+  MaxTTL:
+    Type: Number
+    Description: Maximum number of seconds to cache content
+    Default: 600
+  MinTTL:
+    Type: Number
+    Description: Minimum number of seconds to cache content
+    Default: 0
+  RulesCacheTimeout:
+    Type: Number
+    Description: Number of seconds to cache the rewrite rules
+    Default: 600
+  RulesURL:
+    Type: String
+    Description: URL of the file that contains the rewrite rules
+  Stage:
+    Type: String
+    AllowedValues:
+      - staging
+      - production
+    Default: staging
+    Description: Stage that can be added to resource names
+
+Resources:
+  CFDistribution:
+        Type: AWS::CloudFront::Distribution
+        Properties:
+          DistributionConfig:
+            Enabled: 'true'
+            Comment: !Sub '${Stage} - CI/CD for CloudFront + Lambda@Edge Site'
+            Aliases:
+              - !Ref  Alias
+            ViewerCertificate:
+              AcmCertificateArn: !Ref CertARN
+              MinimumProtocolVersion: 'TLSv1.2_2019'
+              SslSupportMethod: 'sni-only'
+            HttpVersion: 'http2'
+            Origins:
+              - Id: s3-website
+                DomainName: !GetAtt S3Bucket.DomainName
+                CustomOriginConfig:
+                  OriginProtocolPolicy: 'http-only'
+                OriginCustomHeaders:
+                  -
+                    HeaderName: 'rules-url'
+                    HeaderValue: !Ref RulesURL
+                  -
+                    HeaderName: 'rules-cache-timeout'
+                    HeaderValue: !Ref RulesCacheTimeout
+            CustomErrorResponses:
+              -
+                ErrorCode: 404
+                ResponseCode: 404
+                ResponsePagePath: '/404.html'
+            DefaultRootObject: 'index.html'
+            DefaultCacheBehavior:
+              LambdaFunctionAssociations:
+                - 
+                  EventType: origin-request
+                  LambdaFunctionARN: !Ref LambdaEdgeRewriteFunction.Version
+                - 
+                  EventType: origin-response
+                  LambdaFunctionARN: !Ref LambdaEdgeSecurityFunction.Version
+              ForwardedValues:
+                QueryString: 'false'
+                Cookies:
+                  Forward: none
+              Compress: 'true'
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+              TargetOriginId: s3-website
+              ViewerProtocolPolicy : redirect-to-https
+              DefaultTTL: !Ref DefaultTTL
+              MaxTTL: !Ref MaxTTL
+              MinTTL: !Ref MinTTL
+            CacheBehaviors:
+              -
+                TargetOriginId: s3-website
+                Compress: 'true'
+                DefaultTTL: !Ref MediaTTL
+                ForwardedValues:
+                  QueryString: 'false'
+                MinTTL: !Ref MediaTTL
+                MaxTTL: !Ref MediaTTL
+                PathPattern: '*.bmp'
+                ViewerProtocolPolicy: 'redirect-to-https'
+              -
+                TargetOriginId: s3-website
+                Compress: 'true'
+                DefaultTTL: !Ref MediaTTL
+                ForwardedValues:
+                  QueryString: 'false'
+                MinTTL: !Ref MediaTTL
+                MaxTTL: !Ref MediaTTL
+                PathPattern: '*.jpg'
+                ViewerProtocolPolicy: 'redirect-to-https'
+              -
+                TargetOriginId: s3-website
+                Compress: 'true'
+                DefaultTTL: !Ref MediaTTL
+                ForwardedValues:
+                  QueryString: 'false'
+                MinTTL: !Ref MediaTTL
+                MaxTTL: !Ref MediaTTL
+                PathPattern: '*.png'
+                ViewerProtocolPolicy: 'redirect-to-https'
+            Logging:
+              Bucket: !Sub "${LoggingBucketName}.s3.amazonaws.com"
+              Prefix: !Sub "${Stage}/"
+
+  LambdaEdgeRewriteFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: rewrite/
+        Role: !GetAtt LambdaEdgeFunctionRole.Arn
+        Runtime: nodejs12.x
+        Handler: index.handler
+        Timeout: 10
+        AutoPublishAlias: live 
+  LambdaEdgeSecurityFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: security/
+        Role: !GetAtt LambdaEdgeFunctionRole.Arn
+        Runtime: nodejs12.x
+        Handler: index.handler
+        Timeout: 5
+        AutoPublishAlias: live
+
+  LambdaEdgeFunctionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+        Path: "/"
+        ManagedPolicyArns:
+            - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Sid: "AllowLambdaServiceToAssumeRole"
+              Effect: "Allow"
+              Action: 
+                - "sts:AssumeRole"
+              Principal:
+                Service: 
+                  - "lambda.amazonaws.com"
+                  - "edgelambda.amazonaws.com"
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  S3BucketLogging:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref LoggingBucketName 
+      LifecycleConfiguration:
+        Rules:
+          - Id: KeepForOneYear
+            ExpirationInDays: !Ref LogExpiration
+            Status: 'Enabled'
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource:
+              - !Sub "arn:aws:s3:::${S3Bucket}/*"
+Outputs:
+  LambdaEdgeRewriteFunctionVersion: 
+    Description: Lambda@Edge Rewrite Function ARN with Version
+    Value: !Ref LambdaEdgeRewriteFunction.Version
+
+  LambdaEdgeSecurityFunctionVersion: 
+    Description: Lambda@Edge Rewrite Function ARN with Version
+    Value: !Ref LambdaEdgeSecurityFunction.Version
+
+  CFDistribution: 
+    Description: Cloudfront Distribution Domain Name
+    Value: !GetAtt CFDistribution.DomainName

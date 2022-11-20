@@ -1,0 +1,10 @@
+[
+    "^/autodiscover http://autodiscover.tamu.edu [R=302,L,NC]",
+
+    "^/eduroam.*$ https://tamu.service-now.com/tamu-selfservice/knowledge_detail.do?sysparm_document_key=kb_knowledge,a6f3f1da6f64c600b522db3bbb3ee
+41a [R=302,L,NC]",
+
+    "^(.*)/$ $1/index.html [R,L]",
+    "^(((?!\\.).)*)?(/\\?.*)$ $1/index.html [R,L]",
+    "^(((?!\\.).)*)$ $1/index.html [R,L]"
+]

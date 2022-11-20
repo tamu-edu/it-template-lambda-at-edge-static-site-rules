@@ -1,0 +1,48 @@
+{
+  "Records": [
+    {
+      "cf": {
+        "request": {
+          "headers": {
+            "host": [
+              {
+                "value": "d123.cf.net",
+                "key": "Host"
+              }
+            ],
+            "user-agent": [
+              {
+                "value": "test-agent",
+                "key": "User-Agent"
+              }
+            ]
+          },
+          "origin": {
+            "custom": {
+              "customHeaders": {
+                "rules-url": [
+                  {
+                    "value": "../../staging/rules.json",
+                    "key": "Rules-URL"
+                  }
+                ],
+                "rules-cache-timeout": [
+                  {
+                    "value": "1",
+                    "key": "Rules-Cache-Timeout"
+                  }
+                ]
+              }
+            }
+          },
+          "clientIp": "2001:cdba::3257:9652",
+          "uri": "/some/directory",
+          "method": "GET"
+        },
+        "config": {
+          "distributionId": "EXAMPLE"
+        }
+      }
+    }
+  ]
+}

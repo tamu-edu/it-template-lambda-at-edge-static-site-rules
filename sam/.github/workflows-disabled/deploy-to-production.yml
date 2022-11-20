@@ -1,0 +1,47 @@
+name: "Production: Deploy CloudFront + Lambda@Edge SAM Stack"
+on: 
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12'
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - run: python -m pip install --upgrade pip
+    - run: pip install 'aws-sam-cli==1.11.0'
+    - run: sam validate
+    - run: sam build
+    - run: "sam deploy \
+      --stack-name ${AWS_STACK_NAME} \
+      --s3-prefix ${AWS_BUCKET_PREFIX} \
+      --s3-bucket ${AWS_DEPLOY_BUCKET} \
+      --capabilities CAPABILITY_IAM \
+      --no-fail-on-empty-changeset \
+      --parameter-overrides \"${PARAMETER_OVERRIDES}\"" 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_BUCKET_PREFIX: <insert deployment bucket prefix here>/
+      AWS_DEPLOY_BUCKET: <insert deployment bucket name here>
+      AWS_DEFAULT_REGION: 'us-east-1'
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_STACK_NAME: <insert stack name here>
+      SAM_CLI_TELEMETRY: 0
+      TEMPLATE: 'template.yaml'
+      PARAMETER_OVERRIDES: >-
+        ParameterKey=Alias,ParameterValue=<insert site FQDN here>
+        ParameterKey=BucketName,ParameterValue=<insert site FQDN here>
+        ParameterKey=CertARN,ParameterValue=<insert certificate ARN here>
+        ParameterKey=DefaultTTL,ParameterValue=60 
+        ParameterKey=Description,ParameterValue=<insert site description here>
+        ParameterKey=MaxTTL,ParameterValue=60 
+        ParameterKey=LoggingBucketName,ParameterValue=<insert logging bucket name here>
+        ParameterKey=RulesURL,ParameterValue=<insert URL to rules json file here>
+        ParameterKey=Stage,ParameterValue=production

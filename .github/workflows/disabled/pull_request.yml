@@ -1,0 +1,27 @@
+name: "Staging: Deploy CloudFront + Lambda@Edge SAM Stack"
+on: 
+  pull_request:
+    branches:
+    - staging
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12'
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - run: python -m pip install --upgrade pip
+    - run: pip install aws-sam-cli
+    - name: build the SAM rewrite function
+      working-directory: ./sam
+      run: sam build
+    - name: run rewrite tests against rules
+      run: python tester/rewrite_tester.py --test_path tests/
